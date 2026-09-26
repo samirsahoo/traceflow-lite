@@ -39,7 +39,7 @@ public final class TraceFlowConstants {
 
     public static final String UNKNOWN_SERVICE_NAME = "unknown-service";
     public static final String DEFAULT_ENVIRONMENT = "local";
-    public static final String DEFAULT_OTLP_ENDPOINT = "http://localhost:4317";
+    public static final String DEFAULT_OTLP_ENDPOINT = "http://localhost:4318/v1/traces";
 
     private TraceFlowConstants() {
     }

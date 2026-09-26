@@ -93,8 +93,10 @@ public class TraceFlowAutoConfiguration {
     /**
      * Resolution order: explicit {@code traceflow.otlp.endpoint} &gt; the
      * OpenTelemetry-native {@code OTEL_EXPORTER_OTLP_ENDPOINT} &gt; the property
-     * default. The endpoint is always treated as an OTLP/gRPC target (port 4317
-     * by convention), matching {@code traceflow-collector/config.yaml}.
+     * default. This is the value shown by the health/info endpoints; the value
+     * actually used by the exporter is derived independently in
+     * {@link TraceFlowEnvironmentPostProcessor}, which also normalizes a bare
+     * {@code host:4318} into the full {@code /v1/traces} path OTLP/HTTP needs.
      */
     private static String resolveOtlpEndpoint(TraceFlowProperties properties, Environment environment) {
         String explicit = environment.getProperty("traceflow.otlp.endpoint");

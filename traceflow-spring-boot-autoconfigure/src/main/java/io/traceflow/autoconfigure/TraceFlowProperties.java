@@ -146,7 +146,7 @@ public class TraceFlowProperties {
     }
 
     public static class Otlp {
-        private String endpoint = "http://localhost:4317";
+        private String endpoint = "http://localhost:4318/v1/traces";
 
         public String getEndpoint() {
             return endpoint;

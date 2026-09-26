@@ -8,7 +8,7 @@ metadata:
 data:
   SERVICE_NAME: "traceflow-demo"
   ENVIRONMENT: "kubernetes"
-  OTEL_EXPORTER_OTLP_ENDPOINT: "http://traceflow-collector:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://traceflow-collector:4318"
 ---
 # Mirrors traceflow-collector/config.yaml (Section 11), minus the metrics/logs
 # commentary that only makes sense next to the docker-compose stack. Keep the

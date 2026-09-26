@@ -37,7 +37,7 @@ spec:
             - name: ENVIRONMENT
               value: {{ .Values.demo.env.environmentName | quote }}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: {{ if .Values.otelCollector.enabled }}{{ printf "http://%s-collector:4317" (include "traceflow-lite.fullname" .) | quote }}{{ else }}{{ .Values.otelCollector.externalEndpoint | quote }}{{ end }}
+              value: {{ if .Values.otelCollector.enabled }}{{ printf "http://%s-collector:4318" (include "traceflow-lite.fullname" .) | quote }}{{ else }}{{ .Values.otelCollector.externalEndpoint | quote }}{{ end }}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
