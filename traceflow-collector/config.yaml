@@ -1,0 +1,79 @@
+# TraceFlow Lite - OpenTelemetry Collector configuration (Section 11).
+#
+# Scope, deliberately narrow: this collector's only job is receiving traces
+# from TraceFlow-instrumented applications over OTLP and forwarding them to
+# Tempo. Metrics and logs do NOT flow through the collector in this MVP:
+#
+#   - Metrics: Prometheus scrapes each application's /actuator/prometheus
+#     directly (Section 14). That is the standard Micrometer/Prometheus
+#     pattern, needs no translation layer, and keeps this collector config
+#     small - see docs/architecture.md for the full rationale.
+#   - Logs: applications already emit structured JSON to stdout (Section 9).
+#     Promtail (see deployment/docker/promtail-config.yaml) tails the
+#     container log files directly and ships them to Loki; that avoids
+#     depending on the OTLP logs signal, which is less mature than traces
+#     and metrics across the ecosystem.
+#
+# Every processor below exists for a specific failure-isolation reason
+# (Section 15) - see the comment above each one.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Protects the collector itself: without a hard cap, a burst of traces from
+  # a misbehaving or too-verbose app can OOM-kill the collector, taking down
+  # tracing for every other application sharing it. Must be the first
+  # processor in every pipeline it appears in.
+  memory_limiter:
+    check_interval: 2s
+    limit_mib: 200
+    spike_limit_mib: 50
+
+  # Groups spans into fewer, larger export requests instead of one HTTP/gRPC
+  # call per span - both more efficient for Tempo and gentler on the network
+  # between the collector and its backends.
+  batch:
+    send_batch_size: 512
+    timeout: 5s
+
+  # Tags every span that reaches this collector with where the collector
+  # itself is running, independent of whatever k8s.* attributes the
+  # originating application already attached. Useful when one collector is
+  # shared across namespaces.
+  resource:
+    attributes:
+      - key: collector.name
+        value: traceflow-collector
+        action: upsert
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Uncomment while debugging a collector locally to see exactly what it
+  # received, without needing Tempo running at all.
+  # debug:
+  #   verbosity: detailed
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/tempo]
+  telemetry:
+    logs:
+      level: info

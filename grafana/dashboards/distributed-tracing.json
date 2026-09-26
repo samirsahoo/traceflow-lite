@@ -1,0 +1,30 @@
+{
+  "title": "TraceFlow Lite - Distributed Tracing",
+  "uid": "traceflow-tracing",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "30s",
+  "tags": ["traceflow-lite", "tracing"],
+  "panels": [
+    { "id": 1, "title": "Recent Traces", "type": "traces", "gridPos": { "h": 10, "w": 16, "x": 0, "y": 0 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [ { "queryType": "traceql", "query": "{}", "limit": 20, "refId": "A" } ] },
+
+    { "id": 2, "title": "Error Traces", "type": "traces", "gridPos": { "h": 10, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [ { "queryType": "traceql", "query": "{status=error}", "limit": 20, "refId": "A" } ] },
+
+    { "id": 3, "title": "Slow Traces (> 1s)", "type": "traces", "gridPos": { "h": 10, "w": 16, "x": 0, "y": 10 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [ { "queryType": "traceql", "query": "{duration > 1s}", "limit": 20, "refId": "A" } ] },
+
+    { "id": 4, "title": "Service Graph", "type": "text", "gridPos": { "h": 10, "w": 8, "x": 16, "y": 10 },
+      "options": {
+        "mode": "markdown",
+        "content": "**Service graph not enabled in this MVP.**\n\nTempo's service-graph panel needs span-metrics generated from traces and written to Prometheus. To enable it:\n\n1. Add a `metrics_generator` block to `tempo/tempo.yaml` with `processors: [service-graphs, span-metrics]`.\n2. Point its `remote_write` at Prometheus with `--web.enable-remote-write-receiver`.\n3. Replace this panel with a `nodeGraph` panel using the Tempo datasource's `serviceMap` query type.\n\nSee `docs/tracing.md` for the full walkthrough."
+      } }
+  ]
+}

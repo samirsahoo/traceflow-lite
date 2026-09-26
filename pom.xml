@@ -45,6 +45,8 @@
         <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
         <maven-failsafe-plugin.version>3.5.2</maven-failsafe-plugin.version>
         <jacoco-plugin.version>0.8.12</jacoco-plugin.version>
+        <dependency-check-plugin.version>12.1.0</dependency-check-plugin.version>
+        <cyclonedx-plugin.version>2.9.1</cyclonedx-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -137,6 +139,22 @@
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco-plugin.version}</version>
+                </plugin>
+                <!-- Not bound to any phase: CI invokes these explicitly (Section 25),
+                     so a plain `mvn clean verify` stays fast for local development. -->
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>${dependency-check-plugin.version}</version>
+                    <configuration>
+                        <format>HTML</format>
+                        <failBuildOnCVSS>9</failBuildOnCVSS>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>${cyclonedx-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>

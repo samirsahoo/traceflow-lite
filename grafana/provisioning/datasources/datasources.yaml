@@ -1,0 +1,48 @@
+# Auto-provisions all three backends so a developer never has to click
+# through Grafana's UI to add a data source (Section 12/13). Also wires the
+# Metric -> Trace -> Logs -> Trace links Section 13 asks for:
+#   - Prometheus exemplars carry a traceId, linked here to Tempo.
+#   - Tempo's "traces to logs" link jumps to Loki filtered by that traceId.
+#   - Loki's derived field parses "traceId" out of the JSON log line and
+#     links back to Tempo.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      exemplarTraceIdDestinations:
+        - name: traceId
+          datasourceUid: tempo
+
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      derivedFields:
+        - datasourceUid: tempo
+          matcherRegex: '"traceId":"(\w+)"'
+          name: TraceID
+          url: '$${__value.raw}'
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        filterByTraceID: true
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: prometheus
+      serviceMap:
+        datasourceUid: prometheus

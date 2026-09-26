@@ -1,0 +1,41 @@
+apiVersion: v2
+name: traceflow-lite
+description: TraceFlow Lite - the demo app and OTel Collector; optionally the observability backends too
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - observability
+  - opentelemetry
+  - kubernetes
+home: https://github.com/traceflow/traceflow-lite
+
+# Section 18: "clearly document whether TraceFlow installs dependencies or
+# expects existing infrastructure." Answer: by default it does NOT - every
+# dependency below is gated by a `condition` that defaults to false in
+# values.yaml, so `helm install` only creates the TraceFlow-specific
+# resources (the demo app + otel-collector Deployment/Service, templated
+# directly in this chart) and assumes Prometheus/Loki/Tempo/Grafana already
+# exist in the cluster (or were reached some other way, e.g. this repo's
+# docker-compose for local dev). Flipping a dependency's `enabled` flag to
+# true installs the real upstream chart for it - this chart never
+# reimplements what prometheus-community/grafana already maintain.
+#
+# Run `helm dependency update` after enabling any of these, before install.
+dependencies:
+  - name: prometheus
+    version: "25.24.0"
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+  - name: grafana
+    version: "8.5.2"
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled
+  - name: loki
+    version: "6.16.0"
+    repository: https://grafana.github.io/helm-charts
+    condition: loki.enabled
+  - name: tempo
+    version: "1.10.1"
+    repository: https://grafana.github.io/helm-charts
+    condition: tempo.enabled

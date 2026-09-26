@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traceflow-demo-config
+  namespace: traceflow-lite
+  labels:
+    app.kubernetes.io/name: traceflow-demo
+data:
+  SERVICE_NAME: "traceflow-demo"
+  ENVIRONMENT: "kubernetes"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://traceflow-collector:4317"
+---
+# Mirrors traceflow-collector/config.yaml (Section 11), minus the metrics/logs
+# commentary that only makes sense next to the docker-compose stack. Keep the
+# two in sync by hand for this MVP; a kustomize configMapGenerator would
+# remove the duplication but adds a build step beyond plain `kubectl apply -f`.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traceflow-collector-config
+  namespace: traceflow-lite
+  labels:
+    app.kubernetes.io/name: traceflow-collector
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      memory_limiter:
+        check_interval: 2s
+        limit_mib: 200
+        spike_limit_mib: 50
+      batch:
+        send_batch_size: 512
+        timeout: 5s
+      resource:
+        attributes:
+          - key: collector.name
+            value: traceflow-collector
+            action: upsert
+
+    exporters:
+      otlp/tempo:
+        endpoint: tempo:4317
+        tls:
+          insecure: true
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlp/tempo]

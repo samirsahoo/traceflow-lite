@@ -1,0 +1,25 @@
+TraceFlow Lite has been installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Demo app:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "traceflow-lite.fullname" . }}-demo 8080:{{ .Values.demo.service.port }}
+  open http://localhost:8080/actuator/health
+
+{{- if .Values.otelCollector.enabled }}
+OTel Collector was installed and the demo app is already pointed at it.
+{{- else }}
+otelCollector.enabled is false: the demo app is exporting traces to
+{{ .Values.otelCollector.externalEndpoint }} - make sure that endpoint exists,
+or set otelCollector.enabled=true to have this chart deploy one.
+{{- end }}
+
+{{- if not (or .Values.prometheus.enabled .Values.grafana.enabled .Values.loki.enabled .Values.tempo.enabled) }}
+
+No observability backend was installed by this chart (Prometheus/Grafana/Loki/Tempo
+all default to enabled: false - see Chart.yaml for why). Either point the demo app's
+metrics scrape/OTLP/log shipping at your existing backends, or re-install with:
+
+  helm dependency update deployment/helm/traceflow-lite
+  helm upgrade --install {{ .Release.Name }} deployment/helm/traceflow-lite \
+    --set prometheus.enabled=true --set grafana.enabled=true \
+    --set loki.enabled=true --set tempo.enabled=true
+{{- end }}

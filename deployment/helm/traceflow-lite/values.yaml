@@ -1,0 +1,60 @@
+# TraceFlow Lite Helm values.
+#
+# Defaults assume you already have Prometheus/Loki/Tempo/Grafana running
+# somewhere reachable (e.g. an existing cluster observability stack) and
+# just want to deploy the demo app + collector pointed at them. Set the
+# matching *.enabled flag below to true to have this chart install that
+# backend too via its official upstream chart (see Chart.yaml).
+
+demo:
+  image:
+    repository: traceflow-demo
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    port: 8080
+  env:
+    serviceName: traceflow-demo
+    environmentName: kubernetes
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+otelCollector:
+  enabled: true
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: "0.116.1"
+  # Set to an existing collector's address instead if otelCollector.enabled
+  # is false and you already have one running in-cluster.
+  externalEndpoint: ""
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+# Tempo endpoint the bundled collector exports traces to. Point this at your
+# existing Tempo if tempo.enabled is false.
+tempoEndpoint: "tempo:4317"
+
+# --- Optional upstream backend dependencies (Chart.yaml), all off by default ---
+
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
+loki:
+  enabled: false
+
+tempo:
+  enabled: false

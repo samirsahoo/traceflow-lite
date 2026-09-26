@@ -1,0 +1,60 @@
+{
+  "title": "TraceFlow Lite - Kubernetes Application",
+  "uid": "traceflow-k8s-app",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "30s",
+  "tags": ["traceflow-lite", "kubernetes"],
+  "description": "Requires kube-state-metrics and cAdvisor metrics in the cluster's Prometheus - not populated by the local docker-compose stack, only when deployed to Kubernetes/OpenShift (Section 13).",
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(kube_pod_info{pod=~\"traceflow.*\"}, namespace)",
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    { "id": 1, "title": "Pod Count", "type": "stat", "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [ { "expr": "count(kube_pod_info{namespace=~\"$namespace\", pod=~\"traceflow.*\"})", "legendFormat": "pods" } ] },
+
+    { "id": 2, "title": "Restart Count", "type": "stat", "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [ { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"traceflow.*\"})", "legendFormat": "restarts" } ] },
+
+    { "id": 3, "title": "Container Status (Ready)", "type": "stat", "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [ { "expr": "sum(kube_pod_container_status_ready{namespace=~\"$namespace\", pod=~\"traceflow.*\"})", "legendFormat": "ready" } ] },
+
+    { "id": 4, "title": "Container Status (Waiting)", "type": "stat", "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [ { "expr": "sum(kube_pod_container_status_waiting{namespace=~\"$namespace\", pod=~\"traceflow.*\"})", "legendFormat": "waiting" } ] },
+
+    { "id": 5, "title": "CPU per Pod", "type": "timeseries", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "targets": [ { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"traceflow.*\"}[5m])) by (pod)", "legendFormat": "{{pod}}" } ] },
+
+    { "id": 6, "title": "Memory per Pod", "type": "timeseries", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [ { "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"traceflow.*\"}) by (pod)", "legendFormat": "{{pod}}" } ] },
+
+    { "id": 7, "title": "Network Receive", "type": "timeseries", "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "Bps" }, "overrides": [] },
+      "targets": [ { "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"$namespace\", pod=~\"traceflow.*\"}[5m])) by (pod)", "legendFormat": "{{pod}} rx" } ] },
+
+    { "id": 8, "title": "Network Transmit", "type": "timeseries", "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "Bps" }, "overrides": [] },
+      "targets": [ { "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"$namespace\", pod=~\"traceflow.*\"}[5m])) by (pod)", "legendFormat": "{{pod}} tx" } ] }
+  ]
+}

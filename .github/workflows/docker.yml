@@ -1,0 +1,40 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    paths: ["traceflow-lite/**"]
+  pull_request:
+    paths: ["traceflow-lite/**"]
+
+defaults:
+  run:
+    working-directory: traceflow-lite
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Package the demo app jar
+        run: mvn -B -ntp -pl traceflow-demo -am package -DskipTests
+
+      - name: Build image (not pushed - Section 25)
+        run: |
+          docker build -f deployment/docker/Dockerfile -t traceflow-demo:${{ github.sha }} .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: traceflow-demo:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
