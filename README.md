@@ -36,6 +36,103 @@ OpenTelemetry, Micrometer, or any storage backend. See
 [docs/architecture.md](docs/architecture.md) for the full list of principles
 this project holds itself to.
 
+## Add TraceFlow Lite to Your Own Application
+
+This walks through wiring TraceFlow Lite into a Spring Boot app you already
+have - not this repo's demo. Five steps, no instrumentation code.
+
+### 1. Build and install it locally
+
+Not yet published to Maven Central - install the three library modules
+into your local `~/.m2` repository first:
+
+```bash
+git clone <repo>
+cd traceflow-lite
+mvn -pl traceflow-core,traceflow-spring-boot-autoconfigure,traceflow-spring-boot-starter -am install -DskipTests
+```
+
+### 2. Add the one dependency
+
+```xml
+<dependency>
+    <groupId>io.traceflow</groupId>
+    <artifactId>traceflow-spring-boot-starter</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+Built and tested against **Spring Boot 3.5.16 / Java 21** - align your own
+`spring-boot-starter-parent` version to avoid dependency conflicts.
+
+### 3. Set your service name - the only setting you actually need
+
+```yaml
+traceflow:
+  service:
+    name: my-service
+```
+
+Tracing, metrics, JSON logging, and Kubernetes metadata are all on by
+default. Full property list and env var equivalents in
+[docs/configuration.md](docs/configuration.md).
+
+### 4. Expose the actuator endpoints Prometheus needs to scrape
+
+TraceFlow does not override Spring Boot's own (deliberately conservative)
+default of exposing only `/actuator/health` over HTTP - add the ones you
+want scraped or browsed:
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+```
+
+### 5. Point traces at your OTel Collector
+
+```yaml
+traceflow:
+  otlp:
+    endpoint: http://traceflow-collector:4318
+```
+
+Optional for local development: if you skip this, spans export to
+`http://localhost:4318/v1/traces` and silently drop if nothing's listening
+there - your app is never blocked or slowed by a missing collector
+(Section 15's failure-isolation requirement).
+
+### Verify it worked
+
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/prometheus | head
+```
+
+Make a request against any of your own endpoints, then check the console:
+a JSON log line with `traceId`/`spanId` fields should appear for any log
+statement executed while handling that request.
+
+### What you get, with zero other code changes
+
+- JVM + HTTP metrics at `/actuator/prometheus`
+- Distributed traces over OTLP/HTTP, with the `traceparent` header
+  propagated automatically on outbound `RestClient`/`RestTemplate`/
+  `WebClient` calls - no manual header code (see `examples/order-service`
+  for a working two-service proof)
+- Structured JSON logs on stdout with automatic trace correlation and
+  sensitive-field masking (`password`, `token`, `authorization`, etc.)
+- Kubernetes pod identity (`k8s.pod.name`, `k8s.namespace.name`, ...)
+  attached to every trace automatically when running in a cluster
+- A health indicator that reports only TraceFlow's own state - never
+  affected by an unreachable collector, Prometheus, or Grafana
+
+For the full walkthrough - including running the bundled Docker Compose
+stack so you have somewhere to actually see this data - see
+[docs/getting-started.md](docs/getting-started.md).
+
 ## Architecture
 
 ```text
