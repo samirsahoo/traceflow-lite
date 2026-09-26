@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TraceFlow Lite Architecture",
+    "output": "architecture-diagram.html",
+    "quality_profile": "showcase",
+    "viewBox": [1280, 680],
+    "views": [
+      { "id": "traces", "label": "Trace path", "focus": ["app", "collector", "tempo", "grafana"], "note": "OTLP/HTTP to the Collector, exported to Tempo over gRPC." },
+      { "id": "metrics", "label": "Metrics path", "focus": ["prometheus", "app", "grafana"], "note": "Prometheus scrapes /actuator/prometheus directly - no Collector hop." },
+      { "id": "logs", "label": "Logs path", "focus": ["app", "promtail", "loki", "grafana"], "note": "Structured JSON on stdout, shipped by Promtail." }
+    ]
+  },
+  "components": [
+    { "id": "users", "type": "external", "label": "Client", "sublabel": "curl / browser", "pos": [40, 300], "size": [120, 64] },
+    { "id": "app", "type": "backend", "label": "Spring Boot App", "sublabel": "TraceFlow Starter", "pos": [260, 300], "size": [150, 72] },
+    { "id": "collector", "type": "backend", "label": "OTel Collector", "sublabel": "OTLP receiver :4318", "pos": [530, 110], "size": [150, 64] },
+    { "id": "tempo", "type": "database", "label": "Tempo", "sublabel": "trace storage", "pos": [790, 110], "size": [130, 60] },
+    { "id": "prometheus", "type": "database", "label": "Prometheus", "sublabel": "scrapes :8080", "pos": [560, 300], "size": [140, 60] },
+    { "id": "promtail", "type": "backend", "label": "Promtail", "sublabel": "tails stdout", "pos": [530, 490], "size": [140, 60] },
+    { "id": "loki", "type": "database", "label": "Loki", "sublabel": "log storage", "pos": [790, 490], "size": [130, 60] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "dashboards", "pos": [1030, 300], "size": [150, 72] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Kubernetes / OpenShift", "wraps": ["app", "collector", "tempo", "prometheus", "promtail", "loki", "grafana"] }
+  ],
+  "connections": [
+    { "id": "client-to-app", "from": "users", "to": "app", "label": "HTTP", "variant": "emphasis" },
+    { "id": "app-to-collector", "from": "app", "to": "collector", "label": "OTLP/HTTP traces", "fromSide": "top", "toSide": "left" },
+    { "id": "collector-to-tempo", "from": "collector", "to": "tempo", "label": "OTLP/gRPC" },
+    { "id": "prometheus-scrape", "from": "prometheus", "to": "app", "label": "scrape /actuator/prometheus", "variant": "dashed" },
+    { "id": "app-to-promtail", "from": "app", "to": "promtail", "label": "stdout JSON logs", "fromSide": "bottom", "toSide": "left" },
+    { "id": "promtail-to-loki", "from": "promtail", "to": "loki", "label": "push" },
+    { "id": "grafana-query-tempo", "from": "grafana", "to": "tempo", "label": "query", "variant": "dashed" },
+    { "id": "grafana-query-prometheus", "from": "grafana", "to": "prometheus", "label": "query", "variant": "dashed" },
+    { "id": "grafana-query-loki", "from": "grafana", "to": "loki", "label": "query", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Traces", "items": ["OTLP/HTTP export (Spring Boot Actuator's own OTel bridge)", "Collector forwards to Tempo over gRPC", "W3C traceparent/tracestate only - no proprietary format"] },
+    { "dot": "emerald", "title": "Metrics", "items": ["Prometheus pull-scrapes /actuator/prometheus directly", "No Collector hop for this signal", "Two common tags only: service, environment"] },
+    { "dot": "rose", "title": "Logs", "items": ["Structured JSON on stdout with traceId/spanId", "Promtail tails container logs, ships to Loki", "Sensitive fields masked before they're written"] }
+  ]
+}

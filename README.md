@@ -65,7 +65,9 @@ Metrics are scraped directly from each app's `/actuator/prometheus` (the
 standard Micrometer pattern - no translation layer needed). Traces go
 through the OTel Collector to Tempo. Logs are structured JSON on stdout,
 shipped to Loki by Promtail. Full rationale in
-[docs/architecture.md](docs/architecture.md).
+[docs/architecture.md](docs/architecture.md); an interactive, explorable
+version of this diagram (pan/zoom, per-signal guided views, light/dark) is
+at [docs/architecture-diagram.html](docs/architecture-diagram.html).
 
 ## Quick Start
 

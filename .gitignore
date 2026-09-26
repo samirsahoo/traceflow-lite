@@ -11,3 +11,6 @@ target/
 *.log
 build/
 out/
+
+# Locally installed agent skills/tools (e.g. archify) - not project source.
+.agents/

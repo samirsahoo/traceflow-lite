@@ -1,5 +1,16 @@
 # Architecture
 
+An interactive, explorable diagram of everything below - pan/zoom, guided
+views per signal (traces/metrics/logs), light/dark - is at
+[architecture-diagram.html](architecture-diagram.html). Generated with the
+`archify` skill from `docs/architecture-diagram.json`; regenerate after any
+real change to the signal paths with:
+
+```bash
+node .agents/skills/archify/bin/archify.mjs deliver architecture \
+  docs/architecture-diagram.json docs/architecture-diagram.html --quality showcase
+```
+
 ## The ten principles (Section 30)
 
 Everything below is a consequence of these, so they're worth stating first:
