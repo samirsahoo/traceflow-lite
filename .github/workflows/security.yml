@@ -3,15 +3,10 @@ name: Security
 on:
   push:
     branches: [main]
-    paths: ["traceflow-lite/**"]
   pull_request:
-    paths: ["traceflow-lite/**"]
+  workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1" # weekly, catches newly disclosed CVEs in unchanged deps
-
-defaults:
-  run:
-    working-directory: traceflow-lite
 
 jobs:
   dependency-scan:
@@ -36,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: traceflow-lite/**/target/dependency-check-report.html
+          path: "**/target/dependency-check-report.html"
           if-no-files-found: ignore
 
   sbom:
@@ -58,5 +53,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sbom
-          path: traceflow-lite/target/bom.*
+          path: target/bom.*
           if-no-files-found: ignore

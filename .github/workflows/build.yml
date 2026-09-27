@@ -3,13 +3,8 @@ name: Build
 on:
   push:
     branches: [main]
-    paths: ["traceflow-lite/**"]
   pull_request:
-    paths: ["traceflow-lite/**"]
-
-defaults:
-  run:
-    working-directory: traceflow-lite
+  workflow_dispatch:
 
 jobs:
   build:
@@ -39,6 +34,6 @@ jobs:
         with:
           name: test-reports
           path: |
-            traceflow-lite/**/target/surefire-reports/**
-            traceflow-lite/**/target/failsafe-reports/**
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
           if-no-files-found: ignore

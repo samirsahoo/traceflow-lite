@@ -3,13 +3,8 @@ name: Docker
 on:
   push:
     branches: [main]
-    paths: ["traceflow-lite/**"]
   pull_request:
-    paths: ["traceflow-lite/**"]
-
-defaults:
-  run:
-    working-directory: traceflow-lite
+  workflow_dispatch:
 
 jobs:
   build-and-scan:
